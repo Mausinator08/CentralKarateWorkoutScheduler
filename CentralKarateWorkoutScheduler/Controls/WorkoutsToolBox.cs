@@ -8,13 +8,18 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CentralKarateWorkoutScheduler
+namespace CentralKarateWorkoutScheduler.Controls
 {
-	public partial class formHome : Form
+	public partial class WorkoutsToolBox : UserControl
 	{
-		public formHome()
+		public WorkoutsToolBox()
 		{
 			InitializeComponent();
+		}
+
+		private void treeviewWorkoutTree_ItemDrag(object sender, ItemDragEventArgs e)
+		{
+			
 		}
 	}
 }
