@@ -95,6 +95,12 @@
     <Compile Include="Controls\WorkoutsToolBox.Designer.cs">
       <DependentUpon>WorkoutsToolBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\formEditWorkoutsInRotation.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\formEditWorkoutsInRotation.Designer.cs">
+      <DependentUpon>formEditWorkoutsInRotation.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\formHome.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -117,6 +123,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Controls\WorkoutsToolBox.resx">
       <DependentUpon>WorkoutsToolBox.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\formEditWorkoutsInRotation.resx">
+      <DependentUpon>formEditWorkoutsInRotation.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\formHome.resx">
       <DependentUpon>formHome.cs</DependentUpon>
