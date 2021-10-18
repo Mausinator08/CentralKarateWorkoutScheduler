@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CentralKarateWorkoutScheduler.Forms;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -8,10 +9,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace CentralKarateWorkoutScheduler
+namespace CentralKarateWorkoutScheduler.Forms
 {
 	public partial class formHome : Form
 	{
+		private formEditWorkoutsInRotation formEditWorkoutsInRotation = null;
+
 		public formHome()
 		{
 			InitializeComponent();
@@ -29,7 +32,8 @@ namespace CentralKarateWorkoutScheduler
 
 		private void buttonEditWorkoutsInRotation_Click(object sender, EventArgs e)
 		{
-
+			formEditWorkoutsInRotation = new formEditWorkoutsInRotation();
+			formEditWorkoutsInRotation.ShowDialog();
 		}
 	}
 }
