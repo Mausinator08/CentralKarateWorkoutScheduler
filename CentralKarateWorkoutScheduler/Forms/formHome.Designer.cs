@@ -48,11 +48,11 @@ namespace CentralKarateWorkoutScheduler.Forms
 			// menuStrip
 			// 
 			this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.fileToolStripMenuItem,
-			this.editToolStripMenuItem,
-			this.viewToolStripMenuItem,
-			this.windowToolStripMenuItem,
-			this.helpToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.editToolStripMenuItem,
+            this.viewToolStripMenuItem,
+            this.windowToolStripMenuItem,
+            this.helpToolStripMenuItem});
 			this.menuStrip.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip.Name = "menuStrip";
 			this.menuStrip.Size = new System.Drawing.Size(1264, 24);
@@ -62,7 +62,7 @@ namespace CentralKarateWorkoutScheduler.Forms
 			// fileToolStripMenuItem
 			// 
 			this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.exitToolStripMenuItem});
+            this.exitToolStripMenuItem});
 			this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
 			this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
 			this.fileToolStripMenuItem.Text = "File";
@@ -101,8 +101,8 @@ namespace CentralKarateWorkoutScheduler.Forms
 			// toolStrip1
 			// 
 			this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.buttonGenerateWorkouts,
-			this.buttonEditWorkoutsInRotation});
+            this.buttonGenerateWorkouts,
+            this.buttonEditWorkoutsInRotation});
 			this.toolStrip1.Location = new System.Drawing.Point(0, 24);
 			this.toolStrip1.Name = "toolStrip1";
 			this.toolStrip1.Size = new System.Drawing.Size(1264, 25);
@@ -157,6 +157,7 @@ namespace CentralKarateWorkoutScheduler.Forms
 			this.MainMenuStrip = this.menuStrip;
 			this.Name = "formHome";
 			this.Text = "Central Karate - Workout Scheduler";
+			this.Load += new System.EventHandler(this.formHome_Load);
 			this.menuStrip.ResumeLayout(false);
 			this.menuStrip.PerformLayout();
 			this.toolStrip1.ResumeLayout(false);

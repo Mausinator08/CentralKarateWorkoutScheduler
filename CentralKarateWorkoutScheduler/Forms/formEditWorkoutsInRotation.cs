@@ -1,5 +1,9 @@
-﻿using System;
+﻿using CentralKarateWorkoutScheduler.Models;
+using DevExpress.Data.Filtering;
+using DevExpress.Xpo;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -16,10 +20,16 @@ namespace CentralKarateWorkoutScheduler.Forms
 	public partial class formEditWorkoutsInRotation : Form
 	{
 		private TreeNode selectedNode = null;
+		private XPCollection<Class> classes = null;
+		private UnitOfWork uow = new UnitOfWork();
+		private EditWorkoutProperties editForm = null;
+		private ObservableCollection<Classes.ModelProperties> _modelProperties = new ObservableCollection<Classes.ModelProperties>();
+		ChangeValue editName = null;
 
 		public formEditWorkoutsInRotation()
 		{
 			InitializeComponent();
+			classes = new XPCollection<Class>(uow);
 		}
 
 		private void formEditWorkoutsInRotation_Load(object sender, EventArgs e)
@@ -34,30 +44,106 @@ namespace CentralKarateWorkoutScheduler.Forms
 			buttonRemoveItem.Enabled = false;
 			textBoxNodeText.Text = "Workouts In Rotation";
 			textBoxNodeText.Enabled = false;
+			classes.Load();
+
+			sfDataGridModelProperties.DataSource = _modelProperties;
+
+			var cls = classes;
+
+			if (cls.Any() == true)
+			{
+				var wir = treeviewWorkoutsInRotation.Nodes.Find("WorkoutsInRotation", false);
+
+				foreach (var c in cls.OrderBy(i => i.StartHour & i.StartMinute).ToList())
+				{
+					TreeNode node = new TreeNode()
+					{
+						Tag = "class",
+						Name = c.Name,
+						Text = c.DisplayName
+					};
+
+					if (c.Routines.Any() == true)
+					{
+						foreach (var r in c.Routines.ToList())
+						{
+							TreeNode rnode = new TreeNode()
+							{
+								Tag = "routine",
+								Name = r.Name,
+								Text = r.DisplayName
+							};
+
+							if (r.Workouts.Any() == true)
+							{
+								foreach (var w in r.Workouts.ToList())
+								{
+									TreeNode wnode = new TreeNode()
+									{
+										Tag = "workout",
+										Name = w.Name,
+										Text = w.DisplayName
+									};
+
+									rnode.Nodes.Add(wnode);
+								}
+							}
+
+							node.Nodes.Add(rnode);
+						}
+					}
+
+					wir.First().Nodes.Add(node);
+				}
+			}
 		}
 
 		private void buttonAddClass_Click(object sender, EventArgs e)
 		{
 			if (textBoxNewNodeText.Text == "" || textBoxNewNodeText.Text == null)
 			{
-				MessageBox.Show("Please specify text in the [New Node Text] box to create a new node!");
+				editName = new ChangeValue();
+				editName.SetTitle("New Class");
+				editName.SetDataDescription("Class Name:");
+				editName.SetDataValue("Class");
+				var result = editName.ShowDialog();
 
-				return;
+				if (result == DialogResult.OK)
+				{
+					textBoxNewNodeText.Text = editName.Value;
+					editName = null;
+				}
+				else
+                {
+					editName = null;
+					return;
+                }
 			}
+
+			Guid guid = Guid.NewGuid();
 
 			if (selectedNode.Tag.ToString() == "root")
 			{
 				TreeNode node = new TreeNode()
 				{
 					Tag = "class",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
-
 
 				selectedNode.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				classes.Add(new Class(uow)
+				{
+					Id = guid,
+					Name = node.Name,
+					DisplayName = node.Text,
+					StartHour = 0,
+					StartMinute = 0,
+					DurationInMinutes = 0
+				});
 
 				return;
 			}
@@ -67,13 +153,23 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "class",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Parent.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				classes.Add(new Class(uow)
+				{
+					Id = guid,
+					Name = node.Name,
+					DisplayName = node.Text,
+					StartHour = 0,
+					StartMinute = 0,
+					DurationInMinutes = 0
+				});
 
 				return;
 			}
@@ -83,13 +179,23 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "class",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Parent.Parent.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				classes.Add(new Class(uow)
+				{
+					Id = guid,
+					Name = node.Name,
+					DisplayName = node.Text,
+					StartHour = 0,
+					StartMinute = 0,
+					DurationInMinutes = 0
+				});
 
 				return;
 			}
@@ -99,7 +205,7 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "class",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
@@ -107,7 +213,72 @@ namespace CentralKarateWorkoutScheduler.Forms
 
 				textBoxNewNodeText.Text = "";
 
+				classes.Add(new Class(uow)
+				{
+					Id = guid,
+					Name = node.Name,
+					DisplayName = node.Text,
+					StartHour = 0,
+					StartMinute = 0,
+					DurationInMinutes = 0
+				});
+
 				return;
+			}
+		}
+
+		private void FillClassDataGrid(TreeNode node)
+        {
+			_modelProperties.Clear();
+
+			if (classes.Where(i => i.Name == node.Name).Any())
+			{
+				var cls = classes.Where(i => i.Name == node.Name).First();
+
+				_modelProperties.Add(new Classes.ModelProperties(nameof(cls.StartHour), cls.StartHour.ToString()));
+				_modelProperties.Add(new Classes.ModelProperties(nameof(cls.StartMinute), cls.StartMinute.ToString()));
+				_modelProperties.Add(new Classes.ModelProperties(nameof(cls.DisplayName), cls.DisplayName));
+				_modelProperties.Add(new Classes.ModelProperties(nameof(cls.DurationInMinutes), cls.DurationInMinutes.ToString()));
+			}
+		}
+
+		private void FillRoutineDataGrid(TreeNode node)
+        {
+			_modelProperties.Clear();
+
+			if (classes.Where(i => i.Name == node.Parent.Name).Any())
+			{
+				var cls = classes.Where(i => i.Name == node.Parent.Name).First();
+
+				if (cls.Routines.Where(i => i.Name == node.Name).Any())
+				{
+					var routine = cls.Routines.Where(i => i.Name == node.Name).First();
+
+					_modelProperties.Add(new Classes.ModelProperties(nameof(routine.DisplayName), routine.DisplayName));
+				}
+			}
+		}
+
+		private void FillWorkoutDataGrid(TreeNode node)
+		{
+			_modelProperties.Clear();
+
+			if (classes.Where(i => i.Name == node.Parent.Parent.Name).Any())
+			{
+				var cls = classes.Where(i => i.Name == node.Parent.Parent.Name).First();
+
+				if (cls.Routines.Where(i => i.Name == node.Parent.Name).Any())
+				{
+					var routine = cls.Routines.Where(i => i.Name == node.Parent.Name).First();
+
+					if (routine.Workouts.Where(i => i.Name == node.Name).Any())
+					{
+						var workout = routine.Workouts.Where(i => i.Name == node.Name).First();
+
+						_modelProperties.Add(new Classes.ModelProperties(nameof(workout.DisplayName), workout.DisplayName));
+						_modelProperties.Add(new Classes.ModelProperties(nameof(workout.Description), workout.Description));
+					}
+				}
 			}
 		}
 
@@ -125,6 +296,9 @@ namespace CentralKarateWorkoutScheduler.Forms
 				buttonMoveDown.Enabled = false;
 				buttonRemoveItem.Enabled = false;
 				textBoxNodeText.Enabled = false;
+
+				_modelProperties.Clear();
+
 				return;
 			}
 
@@ -137,6 +311,9 @@ namespace CentralKarateWorkoutScheduler.Forms
 				buttonMoveDown.Enabled = true;
 				buttonRemoveItem.Enabled = true;
 				textBoxNodeText.Enabled = true;
+
+				FillClassDataGrid(e.Node);
+
 				return;
 			}
 
@@ -149,6 +326,9 @@ namespace CentralKarateWorkoutScheduler.Forms
 				buttonMoveDown.Enabled = true;
 				buttonRemoveItem.Enabled = true;
 				textBoxNodeText.Enabled = true;
+
+				FillRoutineDataGrid(e.Node);
+
 				return;
 			}
 
@@ -161,6 +341,9 @@ namespace CentralKarateWorkoutScheduler.Forms
 				buttonMoveDown.Enabled = true;
 				buttonRemoveItem.Enabled = true;
 				textBoxNodeText.Enabled = true;
+
+				FillWorkoutDataGrid(e.Node);
+
 				return;
 			}
 		}
@@ -169,23 +352,52 @@ namespace CentralKarateWorkoutScheduler.Forms
 		{
 			if (textBoxNewNodeText.Text == "" || textBoxNewNodeText.Text == null)
 			{
-				MessageBox.Show("Please specify text in the [New Node Text] box to create a new node!");
+				editName = new ChangeValue();
+				editName.SetTitle("New Routine");
+				editName.SetDataDescription("Routine Name:");
+				editName.SetDataValue("Routine");
+				var result = editName.ShowDialog();
 
-				return;
+				if (result == DialogResult.OK)
+				{
+					textBoxNewNodeText.Text = editName.Value;
+					editName = null;
+				}
+				else
+				{
+					editName = null;
+					return;
+				}
 			}
+
+			Guid guid = Guid.NewGuid();
 
 			if (selectedNode.Tag.ToString() == "class")
 			{
 				TreeNode node = new TreeNode()
 				{
 					Tag = "routine",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				var cls = classes.Where(i =>
+				i.Name == node.Parent.Name);
+
+				if (cls.Any() == true)
+				{
+					cls.First().Routines.Add(new Routine(uow)
+					{
+						Id = guid,
+						Name = node.Name,
+						DisplayName = node.Text,
+						ClassRef = cls.First()
+					});
+				}
 
 				return;
 			}
@@ -195,13 +407,27 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "routine",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Parent.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				var cls = classes.Where(i =>
+				i.Name == node.Parent.Name);
+
+				if (cls.Any() == true)
+				{
+					cls.First().Routines.Add(new Routine(uow)
+					{
+						Id = guid,
+						Name = node.Name,
+						DisplayName = node.Text,
+						ClassRef = cls.First()
+					});
+				}
 
 				return;
 			}
@@ -211,13 +437,27 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "routine",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Parent.Parent.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				var cls = classes.Where(i =>
+				i.Name == node.Parent.Name);
+
+				if (cls.Any() == true)
+				{
+					cls.First().Routines.Add(new Routine(uow)
+					{
+						Id = guid,
+						Name = node.Name,
+						DisplayName = node.Text,
+						ClassRef = cls.First()
+					});
+				}
 
 				return;
 			}
@@ -227,23 +467,58 @@ namespace CentralKarateWorkoutScheduler.Forms
 		{
 			if (textBoxNewNodeText.Text == "" || textBoxNewNodeText.Text == null)
 			{
-				MessageBox.Show("Please specify text in the [New Node Text] box to create a new node!");
+				editName = new ChangeValue();
+				editName.SetTitle("New Workout");
+				editName.SetDataDescription("Workout Name:");
+				editName.SetDataValue("Workout");
+				var result = editName.ShowDialog();
 
-				return;
+				if (result == DialogResult.OK)
+				{
+					textBoxNewNodeText.Text = editName.Value;
+					editName = null;
+				}
+				else
+				{
+					editName = null;
+					return;
+				}
 			}
+
+			Guid guid = Guid.NewGuid();
 
 			if (selectedNode.Tag.ToString() == "routine")
 			{
 				TreeNode node = new TreeNode()
 				{
 					Tag = "workout",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				var cls = classes.Where(i =>
+				i.Name == node.Parent.Parent.Name);
+
+				if (cls.Any() == true)
+				{
+					var routine = cls.First().Routines.Where(i => i.Name == node.Parent.Name);
+					
+					if (routine.Any() == true)
+					{
+						routine.First().Workouts.Add(new Workout(uow)
+						 {
+							 Id = guid,
+							 Name = node.Name,
+							 DisplayName = node.Text,
+							 Description = null,
+							 RoutineRef = routine.First()
+						 });
+					}
+				}
 
 				return;
 			}
@@ -253,13 +528,33 @@ namespace CentralKarateWorkoutScheduler.Forms
 				TreeNode node = new TreeNode()
 				{
 					Tag = "workout",
-					Name = textBoxNewNodeText.Text + Guid.NewGuid().ToString(),
+					Name = textBoxNewNodeText.Text + $"{{{guid.ToString()}}}",
 					Text = textBoxNewNodeText.Text
 				};
 
 				selectedNode.Parent.Nodes.Add(node);
 
 				textBoxNewNodeText.Text = "";
+
+				var cls = classes.Where(i =>
+				i.Name == node.Parent.Parent.Name);
+
+				if (cls.Any() == true)
+				{
+					var routine = cls.First().Routines.Where(i => i.Name == node.Parent.Name);
+
+					if (routine.Any() == true)
+					{
+						routine.First().Workouts.Add(new Workout(uow)
+						{
+							Id = guid,
+							Name = node.Name,
+							DisplayName = node.Text,
+							Description = null,
+							RoutineRef = routine.First()
+						});
+					}
+				}
 
 				return;
 			}
@@ -332,19 +627,176 @@ namespace CentralKarateWorkoutScheduler.Forms
 			if (selectedNode != null)
 			{
 				selectedNode.Text = textBoxNodeText.Text;
+
+				if (selectedNode.Tag.ToString() == "class")
+                {
+					var cls = classes.Where(i => i.Name == selectedNode.Name);
+
+					if (cls.Any())
+                    {
+						cls.First().DisplayName = selectedNode.Text;
+                    }
+				}
+
+				if (selectedNode.Tag.ToString() == "routine")
+				{
+					var cls = classes.Where(i => i.Name == selectedNode.Parent.Name);
+
+					if (cls.Any())
+					{
+						var routine = cls.First().Routines.Where(i => i.Name == selectedNode.Name);
+
+						if (routine.Any())
+                        {
+							routine.First().DisplayName = selectedNode.Text;
+                        }
+					}
+				}
+
+				if (selectedNode.Tag.ToString() == "workout")
+				{
+					var cls = classes.Where(i => i.Name == selectedNode.Parent.Parent.Name);
+
+					if (cls.Any())
+					{
+						var routine = cls.First().Routines.Where(i => i.Name == selectedNode.Parent.Name);
+
+						if (routine.Any())
+						{
+							var workout = routine.First().Workouts.Where(i => i.Name == selectedNode.Name);
+
+							if (workout.Any())
+                            {
+								workout.First().DisplayName = selectedNode.Text;
+                            }
+						}
+					}
+				}
 			}
 		}
 
 		private void buttonOK_Click(object sender, EventArgs e)
 		{
-			Directory.CreateDirectory(@"Data");
-
+			uow.CommitChanges();
+			Close();
 		}
 
 		private void buttonCancel_Click(object sender, EventArgs e)
 		{
 			if (MessageBox.Show("Any changes you have made will be lost! Are you sure?", "WARNING!", MessageBoxButtons.YesNo) == DialogResult.Yes)
 				Close();
+		}
+
+		private void buttonEdit_Click(object sender, EventArgs e)
+		{
+			if (selectedNode.Tag.ToString() == "root")
+			{
+				MessageBox.Show("Please select a node other than the root node!");
+
+				return;
+			}
+
+			if (selectedNode.Tag.ToString() == "class")
+            {
+				editForm = new EditWorkoutProperties();
+				
+				var cls = classes.Where(i => i.Name == selectedNode.Name);
+
+				if (cls.Any())
+				{
+					editForm.SetClassToDataSource(cls.First());
+					var result = editForm.ShowDialog();
+
+					if (result == DialogResult.OK)
+					{
+						classes.Remove(cls.First());
+						classes.Add(editForm.Class);
+
+						FillClassDataGrid(selectedNode);
+					}
+
+					editForm = null;
+				}
+				else
+                {
+					MessageBox.Show("Class does not exist in database!", "Error");
+                }
+
+				return;
+			}
+
+			if (selectedNode.Tag.ToString() == "routine")
+			{
+				editForm = new EditWorkoutProperties();
+
+				var cls = classes.Where(i => i.Name == selectedNode.Parent.Name);
+
+				if (cls.Any())
+				{
+					var routine = cls.First().Routines.Where(i => i.Name == selectedNode.Name);
+
+					if (routine.Any())
+					{
+						editForm.SetRoutineToDataSource(routine.First());
+						var result = editForm.ShowDialog();
+
+						if (result == DialogResult.OK)
+						{
+							cls.First().Routines.Remove(routine.First());
+							cls.First().Routines.Add(editForm.Routine);
+
+							FillRoutineDataGrid(selectedNode);
+						}
+
+						editForm = null;
+					}
+				}
+				else
+				{
+					MessageBox.Show("Routine does not exist in database!", "Error");
+				}
+
+				return;
+			}
+
+			if (selectedNode.Tag.ToString() == "workout")
+			{
+				editForm = new EditWorkoutProperties();
+
+				var cls = classes.Where(i => i.Name == selectedNode.Parent.Parent.Name);
+
+				if (cls.Any())
+				{
+					var routine = cls.First().Routines.Where(i => i.Name == selectedNode.Parent.Name);
+
+					if (routine.Any())
+					{
+						var workout = routine.First().Workouts.Where(i => i.Name == selectedNode.Name);
+
+						if (workout.Any())
+						{
+							editForm.SetWorkoutToDataSource(workout.First());
+							var result = editForm.ShowDialog();
+
+							if (result == DialogResult.OK)
+							{
+								routine.First().Workouts.Remove(workout.First());
+								routine.First().Workouts.Add(editForm.Workout);
+
+								FillWorkoutDataGrid(selectedNode);
+							}
+
+							editForm = null;
+						}
+					}
+				}
+				else
+				{
+					MessageBox.Show("Routine does not exist in database!", "Error");
+				}
+
+				return;
+			}
 		}
 	}
 }

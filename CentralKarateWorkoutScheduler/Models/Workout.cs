@@ -7,14 +7,14 @@ using DevExpress.Xpo;
 
 namespace CentralKarateWorkoutScheduler.Models
 {
-	public class Class : XPObject
+	public class Workout : XPObject
 	{
-		public Class() : base()
+		public Workout() : base()
 		{
 
 		}
 
-		public Class(Session session) : base(session)
+		public Workout(Session session) : base(session)
 		{
 
 		}
@@ -27,9 +27,8 @@ namespace CentralKarateWorkoutScheduler.Models
 		Guid id;
 		string name;
 		string displayName;
-		int startHour;
-		int startMinute;
-		int durationInMinutes;
+		string description;
+		Routine routineRef;
 
 		public Guid Id
 		{
@@ -51,28 +50,18 @@ namespace CentralKarateWorkoutScheduler.Models
 			set => SetPropertyValue(nameof(DisplayName), ref displayName, value);
 		}
 
-		public int StartHour
+		[Size(250)]
+		public string Description
 		{
-			get => startHour;
-			set => SetPropertyValue(nameof(StartHour), ref startHour, value);
+			get => description;
+			set => SetPropertyValue(nameof(Description), ref description, value);
 		}
 
-		public int StartMinute
+		[Association("Routine-Workouts")]
+		public Routine RoutineRef
 		{
-			get => startMinute;
-			set => SetPropertyValue(nameof(StartMinute), ref startMinute, value);
-		}
-
-		public int DurationInMinutes
-		{
-			get => durationInMinutes;
-			set => SetPropertyValue(nameof(DurationInMinutes), ref durationInMinutes, value);
-		}
-
-		[Association("Class-Routines"), Aggregated]
-		public XPCollection<Routine> Routines
-		{
-			get => GetCollection<Routine>(nameof(Routines));
+			get => routineRef;
+			set => SetPropertyValue(nameof(RoutineRef), ref routineRef, value);
 		}
 	}
 }

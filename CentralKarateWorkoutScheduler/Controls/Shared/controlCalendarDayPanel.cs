@@ -27,5 +27,15 @@ namespace CentralKarateWorkoutScheduler.Controls.Shared
 		{
 			this.textBoxDetails.Lines = workouts;
 		}
+
+		public void DisableDetails()
+        {
+			this.textBoxDetails.Enabled = false;
+        }
+
+		public void EnableDetails()
+        {
+			this.textBoxDetails.Enabled = true;
+        }
 	}
 }

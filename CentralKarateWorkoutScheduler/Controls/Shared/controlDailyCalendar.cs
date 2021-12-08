@@ -26,11 +26,27 @@ namespace CentralKarateWorkoutScheduler.Controls.Shared
 				startDate = startDate.AddDays(-1);
 			}
 
-			for (DateTime date = startDate; date <= startDate.AddDays(34); date.AddDays(1))
+			this.tableLayoutDailyCalendar.Controls.Clear();
+
+			for (DateTime date = startDate; date <= startDate.AddDays(34); date = date.AddDays(1))
 			{
 				controlCalendarDayPanel calDayPanel = new controlCalendarDayPanel();
 				calDayPanel.Init(date.Day);
+				if (date.Month > month)
+                {
+					calDayPanel.BackColor = Color.DimGray;
+					calDayPanel.DisableDetails();
+                }
+
+				if (date.Month < month)
+                {
+					calDayPanel.BackColor = Color.DimGray;
+					calDayPanel.DisableDetails();
+                }
+
+				calDayPanel.Dock = DockStyle.Fill;
+				this.tableLayoutDailyCalendar.Controls.Add(calDayPanel);
 			}
 		}
-	}
+    }
 }
